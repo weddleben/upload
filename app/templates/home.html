@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <title>EOL File Upload</title>
+
+</head>
+
+<body>
+
+    <dialog id="modalAlert" class="modalAlert">
+        <div id="modalAlertMessage" class="modalAlertMessage"></div>
+        <br>
+        <button id="modalAlertButton" class="modalAlertButton" onclick="closeModalAlert()">close</button>
+    </dialog>
+
+    <main id="dropArea">
+
+        <div style="font-size: 20pt;">
+            <div>Drag and Drop, or use the button below.</div>
+            <br>
+            <div style="font-style: italic;">(only one file at a time)</div>
+        </div>
+
+        <br><br>
+
+        <div style="font-size: 25pt">
+
+            <input type="file" style="font-size: 15pt; text-align: center;" id="uploadFile">
+
+        </div>
+
+        <br>
+
+        <div style="font-size: 18pt;">
+            <button onclick="uploadFile()" style="font-size: inherit;">UPLOAD</button>
+        </div>
+
+        <br><br>
+
+        <div id="uploadStatus" style="display: none;">
+            <div style="display: inline-block; font-size: 18pt; margin-right: 10px;" id="progressPercent"></div>
+            <progress id="progress" value="0" , max="100" style="margin-right: 10px; font-size: 18pt;"></progress>
+            <div style="display: inline-block; font-size: 18pt;">uploading...</div>
+        </div>
+
+    </main>
+
+    <script src="/static/js/upload.js"></script>
+
+</body>
+
+</html>

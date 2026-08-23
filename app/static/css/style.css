@@ -1,0 +1,38 @@
+html, body {
+    background-color: #040c1f;
+    padding: 0%;
+    margin: 0%;
+    font-family: sans-serif;
+    color: #ffffff;
+}
+
+main {
+    margin-top: 5%;
+    display: flex;
+    justify-content: center;
+    column-gap: 100%;
+    flex-wrap: wrap;
+    text-align: center;
+    row-gap: 15pt;
+}
+
+.modalAlert {
+  display: none;
+  z-index: 1;
+  position: fixed;
+  margin-top: 25px;
+  padding: 20px;
+  max-width: 85%;
+  overflow: auto;
+  font-size: 18pt;
+  color: #ffffff;
+  text-align: left;
+  background-color: rgba(0, 0, 0, 0.8);
+  /* Black, 80% opacity */
+}
+
+.modalAlertButton {
+  display: block;
+  margin: 0 auto;
+  font-size: 17pt;
+}
