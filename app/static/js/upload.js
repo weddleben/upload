@@ -18,6 +18,7 @@ async function uploadFile() {
     // if (fileExists) { return; }
 
     document.getElementById("uploadStatus").style.display = "block";
+    document.getElementById("resultArea").style.display = "none";
 
     let data = new FormData();
     const file = document.getElementById("uploadFile").files[0];
@@ -36,6 +37,7 @@ async function uploadFile() {
     request.addEventListener("load", function () {
         if (request.status == 200){
             document.getElementById("progressPercent").innerText = "100%";
+            document.getElementById("uploadStatus").style.display = "none";
             const response = JSON.parse(request.responseText);
             document.getElementById("uploadUrl").value = response.url;
             document.getElementById("resultArea").style.display = "block";
@@ -68,6 +70,10 @@ function copyUrl() {
 window.addEventListener("dragover", (e) => { e.preventDefault() })
 window.addEventListener("drop", handleFileDrop)
 
+document.getElementById("uploadFile").addEventListener("change", function() {
+    document.getElementById("resultArea").style.display = "none";
+})
+
 function handleFileDrop(drop) {
     drop.preventDefault();
     let fileDrop = drop.dataTransfer.files[0]; // only allow one file at a time
@@ -75,5 +81,5 @@ function handleFileDrop(drop) {
     dataTransfer.items.add(fileDrop);
     let element = document.getElementById("uploadFile");
     element.files = dataTransfer.files;
-
+    document.getElementById("resultArea").style.display = "none";
 }
