@@ -48,6 +48,15 @@
             <div style="display: inline-block; font-size: 18pt;">uploading...</div>
         </div>
 
+        <br>
+
+        <div id="resultArea" style="display: none; font-size: 18pt;">
+            <div>File uploaded! Your URL:</div>
+            <br>
+            <input type="text" id="uploadUrl" style="width: 600px; font-size: 14pt; padding: 5px;" readonly>
+            <button onclick="copyUrl()" style="font-size: 14pt; margin-left: 10px; padding: 5px 15px;">Copy</button>
+        </div>
+
     </main>
 
     <script src="/static/js/upload.js"></script>

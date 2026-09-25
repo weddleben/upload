@@ -36,8 +36,9 @@ async function uploadFile() {
     request.addEventListener("load", function () {
         if (request.status == 200){
             document.getElementById("progressPercent").innerText = "100%";
-            // await new Promise(requestAnimationFrame); // allow time for updating content before alert() box
-            alert(`${file.name} successfully uploaded!`);
+            const response = JSON.parse(request.responseText);
+            document.getElementById("uploadUrl").value = response.url;
+            document.getElementById("resultArea").style.display = "block";
         } else {
             alert(`Could not upload ${file.name}! Please try again or contact Mas (it's his fault).`);
             document.getElementById("uploadStatus").style.display = "none";
@@ -58,24 +59,10 @@ function checkFileSelected() {
     } else { return true; }
 }
 
-async function fileAlreadyExistsInDB() {
-    const filename = document.getElementById("uploadFile").files[0].name;
-    const data = { "filename": filename };
-    let response = await fetch("/upload/checkduplicate", {
-        headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-        },
-        method: "POST",
-        body: JSON.stringify(data)
-    })
-
-    if (response.ok) {
-        return false;
-    }
-    let responseJSON = await response.json();
-    modalAlert(responseJSON.response);
-    return true;
+function copyUrl() {
+    const urlInput = document.getElementById("uploadUrl");
+    urlInput.select();
+    navigator.clipboard.writeText(urlInput.value);
 }
 
 window.addEventListener("dragover", (e) => { e.preventDefault() })
