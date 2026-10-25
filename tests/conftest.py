@@ -1,7 +1,6 @@
 import pytest
 
 from app import app
-from app.upload import views
 
 
 @pytest.fixture(autouse=True)
@@ -15,11 +14,9 @@ def master_password():
 
 @pytest.fixture(autouse=True)
 def upload_base(tmp_path, monkeypatch):
-    """Keep both uploaded files and public downloads in temporary storage."""
-    static_dir = tmp_path / "static"
-    upload_dir = static_dir / "uploads"
-    monkeypatch.setattr(app, "static_folder", str(static_dir))
-    monkeypatch.setattr(views, "UPLOAD_DIR", upload_dir)
+    """Exercise storage outside the static folder without touching real uploads."""
+    upload_dir = tmp_path / "file-storage"
+    monkeypatch.setitem(app.config, "UPLOAD_DIRECTORY", str(upload_dir))
     return upload_dir
 
 

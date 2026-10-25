@@ -123,3 +123,33 @@ def test_password_precheck_does_not_authorize_later_uploads(client, upload_base)
             data['password'] = password
         assert client.put('/upload/newfile', data=data).status_code == 401
     assert not upload_base.exists()
+
+
+def test_external_directory_is_used_for_upload_admin_and_delete(client, upload_base):
+    from pathlib import Path
+    from urllib.parse import urlsplit
+
+    assert not upload_base.is_relative_to(Path(app.static_folder))
+    response = client.put('/upload/newfile', data={
+        'password': PASSWORD, 'file': (BytesIO(b'external'), 'external.txt'),
+    })
+    path = urlsplit(response.json['url']).path
+    assert path.startswith('/static/uploads/')
+    relative = path.removeprefix('/static/uploads/')
+    assert (upload_base / relative).read_bytes() == b'external'
+    assert client.get(path).data == b'external'
+    listing = client.post('/admin', data={'password': PASSWORD})
+    assert path.encode() in listing.data
+    assert client.delete('/admin/file', data={'password': PASSWORD, 'path': relative}).status_code == 200
+    assert client.get(path).status_code == 404
+
+
+def test_download_rejects_traversal_and_external_symlinks(client, upload_base, tmp_path):
+    upload_base.mkdir()
+    outside = tmp_path / 'outside.txt'
+    outside.write_bytes(b'not public')
+    (upload_base / 'link.txt').symlink_to(outside)
+    for path in ('../outside.txt', '%2e%2e/outside.txt', 'link.txt', 'missing.txt'):
+        response = client.get('/static/uploads/' + path)
+        assert response.status_code == 404
+        assert b'not public' not in response.data

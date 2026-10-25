@@ -2,19 +2,20 @@ import secrets
 from datetime import datetime, timezone
 from pathlib import Path
 
-from flask import json, request, render_template, url_for, make_response
+from flask import json, request, render_template, url_for, make_response, send_from_directory, abort
 from werkzeug.utils import secure_filename
 
 from app import app
 from app.auth.views import check_upload_password
 
-UPLOAD_DIR = Path(__file__).resolve().parent.parent / "static" / "uploads"
+def upload_directory():
+    return Path(app.config["UPLOAD_DIRECTORY"]).resolve()
 
 
 @app.after_request
 def secure_uploaded_downloads(response):
     filename = (request.view_args or {}).get("filename", "")
-    if request.endpoint == "static" and filename.startswith("uploads/"):
+    if request.endpoint == "download_file" or (request.endpoint == "static" and filename.startswith("uploads/")):
         disposition = response.headers.get("Content-Disposition", "")
         _, separator, parameters = disposition.partition(";")
         response.headers["Content-Disposition"] = "attachment" + (separator + parameters if separator else "")
@@ -22,6 +23,14 @@ def secure_uploaded_downloads(response):
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["Content-Security-Policy"] = "sandbox; default-src 'none'"
     return response
+
+
+@app.get("/static/uploads/<path:filename>")
+def download_file(filename):
+    root = upload_directory()
+    if not (root / filename).resolve().is_relative_to(root):
+        abort(404)
+    return send_from_directory(root, filename, as_attachment=True, mimetype="application/octet-stream")
 
 
 @app.route("/upload/check-password", methods=["POST"])
@@ -47,7 +56,7 @@ def admin():
             status = 401
         else:
             files = []
-            root = UPLOAD_DIR.resolve()
+            root = upload_directory()
             if root.exists():
                 for path in root.rglob("*"):
                     if not path.is_file() or not path.resolve().is_relative_to(root):
@@ -56,7 +65,7 @@ def admin():
                     files.append({
                         "name": path.name,
                         "path": path.relative_to(root).as_posix(),
-                        "url": url_for("static", filename="uploads/" + path.relative_to(root).as_posix()),
+                        "url": url_for("download_file", filename=path.relative_to(root).as_posix()),
                         "size": stat.st_size,
                         "modified": stat.st_mtime,
                         "date": datetime.fromtimestamp(stat.st_mtime, timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
@@ -74,7 +83,7 @@ def delete_file():
         return {"error": "Incorrect password."}, 401, {"Cache-Control": "no-store"}
 
     relative = Path(request.form.get("path") or "")
-    root = UPLOAD_DIR.resolve()
+    root = upload_directory()
     if relative.is_absolute() or ".." in relative.parts or not relative.parts:
         return {"error": "Invalid file path."}, 400
     target = root / relative
@@ -112,7 +121,7 @@ def new_file():
         return json.dumps({"error": "invalid filename"}), 400
 
     folder_name = secrets.token_hex(16)
-    upload_root = UPLOAD_DIR.resolve()
+    upload_root = upload_directory()
     dest_dir = upload_root / folder_name
     dest_dir.mkdir(parents=True)
 
@@ -121,6 +130,6 @@ def new_file():
         return json.dumps({"error": "invalid filename"}), 400
     file.save(destination)
 
-    url = url_for("static", filename=f"uploads/{folder_name}/{filename}", _external=True)
+    url = url_for("download_file", filename=f"{folder_name}/{filename}", _external=True)
 
     return json.dumps({"url": url}), 200, {"Content-Type": "application/json"}
