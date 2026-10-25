@@ -43,4 +43,4 @@ jobs:
           ssh -T -i ~/.ssh/deploy_key \
             -o BatchMode=yes -o IdentitiesOnly=yes \
             -o StrictHostKeyChecking=yes -o ConnectTimeout=15 \
-            upload-deploy@pointlessapi.com "deploy $GITHUB_SHA"
+            upload-deploy@upload.benisnotjamin.com "deploy $GITHUB_SHA"
