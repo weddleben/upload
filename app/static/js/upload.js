@@ -94,7 +94,7 @@ async function uploadFile() {
             modalAlert("server misconfigured: no upload password set. Contact the admin.");
             document.getElementById("uploadStatus").style.display = "none";
         } else {
-            alert(`Could not upload ${file.name}! Please try again or contact Mas (it's his fault).`);
+            alert(`Could not upload ${file.name}! Please try again or contact Ben (it's his fault).`);
             document.getElementById("uploadStatus").style.display = "none";
         }
     })
