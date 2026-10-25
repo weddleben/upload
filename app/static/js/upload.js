@@ -11,20 +11,64 @@ function closeModalAlert() {
     return;
 }
 
+let uploadInProgress = false;
+
 async function uploadFile() {
+    if (uploadInProgress) return;
     if (!checkFileSelected()) { return; }
 
     // let fileExists = await fileAlreadyExistsInDB();
     // if (fileExists) { return; }
 
+    const passwordInput = document.getElementById("uploadPassword");
+    if (!passwordInput.value) {
+        modalAlert("enter your password first");
+        passwordInput.focus();
+        return;
+    }
+
+    const password = passwordInput.value;
+    const file = document.getElementById("uploadFile").files[0];
+    const submitButton = document.querySelector('#uploadForm button[type="submit"]');
+    uploadInProgress = true;
+    submitButton.disabled = true;
+    function finishUpload() {
+        uploadInProgress = false;
+        submitButton.disabled = false;
+        document.getElementById("uploadStatus").style.display = "none";
+    }
+    try {
+        const response = await fetch("/upload/check-password", {
+            method: "POST",
+            body: new URLSearchParams({password}),
+        });
+        if (!response.ok) {
+            if (response.status === 401) {
+                passwordInput.value = "";
+                passwordInput.focus();
+                throw new Error("wrong password — the file was not uploaded");
+            }
+            throw new Error("Could not verify the password. Please try again or contact the admin.");
+        }
+    } catch (error) {
+        modalAlert(error.message);
+        finishUpload();
+        return;
+    }
+
+    document.getElementById("progress").value = 0;
+    document.getElementById("progressPercent").innerText = "0%";
     document.getElementById("uploadStatus").style.display = "block";
     document.getElementById("resultArea").style.display = "none";
 
     let data = new FormData();
-    const file = document.getElementById("uploadFile").files[0];
-    data.append("file", file)
+    data.append("file", file);
+    data.append("password", password);
 
     const request = new XMLHttpRequest();
+    request.addEventListener("loadend", finishUpload);
+    request.addEventListener("error", () => modalAlert("Network error — the upload could not be completed. Please try again."));
+    request.addEventListener("abort", () => modalAlert("Upload cancelled."));
 
     request.upload.addEventListener("progress", function (event) {
         // Get a suitable number for the progress bar. 
@@ -41,6 +85,14 @@ async function uploadFile() {
             const response = JSON.parse(request.responseText);
             document.getElementById("uploadUrl").value = response.url;
             document.getElementById("resultArea").style.display = "block";
+        } else if (request.status == 401) {
+            modalAlert("wrong password — the upload was rejected");
+            passwordInput.value = "";
+            passwordInput.focus();
+            document.getElementById("uploadStatus").style.display = "none";
+        } else if (request.status == 500) {
+            modalAlert("server misconfigured: no upload password set. Contact the admin.");
+            document.getElementById("uploadStatus").style.display = "none";
         } else {
             alert(`Could not upload ${file.name}! Please try again or contact Mas (it's his fault).`);
             document.getElementById("uploadStatus").style.display = "none";
@@ -66,6 +118,11 @@ function copyUrl() {
     urlInput.select();
     navigator.clipboard.writeText(urlInput.value);
 }
+
+document.getElementById("uploadForm").addEventListener("submit", function (event) {
+    event.preventDefault();
+    uploadFile();
+});
 
 window.addEventListener("dragover", (e) => { e.preventDefault() })
 window.addEventListener("drop", handleFileDrop)
